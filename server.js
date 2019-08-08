@@ -39,8 +39,6 @@ app.get('/auth/redirect', (req, res) =>{
 })
 
 app.post('/action', (req, res) => {
-    console.log(req.headers.authorization);
-    console.log(accessToken)
     if (!accessToken || accessToken === "") {
         res.status(401).send(JSON.stringify(
             {
@@ -56,8 +54,53 @@ app.post('/action', (req, res) => {
         console.log("unauthorized")
     }
     else {
-        res.status(200).header("CARD-ACTION-STATUS", "Done!").end()
-        console.log("success")
+        request.get('https://graph.microsoft.com/beta/me', {
+                'auth': {
+                    'bearer': accessToken
+                }
+            },
+            (error, response, body) => {
+                if (error) {
+                    res.status(200).header("CARD-ACTION-STATUS", "Please try again").end();
+                    return;
+                }
+                JSONresponse = JSON.parse(body);
+                res.status(200).header("CARD-UPDATE-IN-BODY", true).send(JSON.stringify(
+                    {
+                        "type": "AdaptiveCard",
+                        "version": "1.0",
+                        "body": [
+                            {
+                                "type": "FactSet",
+                                "facts": [
+                                    {
+                                        "title": "Name",
+                                        "value": JSONresponse.displayName
+                                    },
+                                    {
+                                        "title": "Company",
+                                        "value": JSONresponse.companyName
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "ActionSet",
+                                "actions": [
+                                    {
+                                        "type": "Action.Http",
+                                        "method": "POST",
+                                        "url": "https://b56a3ab4.ngrok.io/action",
+                                        "body": "{}",
+                                        "title": "Get Details",
+                                        "isPrimary": true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                )).end()
+            }
+        );
     }
 })
 
