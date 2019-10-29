@@ -7,10 +7,8 @@ var accessToken = ""
 
 const port = 3000
 
-app.get('/', (req, res) => res.send('Hello World!'))
-
 app.get('/auth/redirect', (req, res) =>{
-//     POST /{tenant}/oauth2/token HTTP/1.1
+// POST /{tenant}/oauth2/token HTTP/1.1
 // Host: https://login.microsoftonline.com
 // Content-Type: application/x-www-form-urlencoded
 // grant_type=authorization_code
@@ -34,23 +32,21 @@ app.get('/auth/redirect', (req, res) =>{
     request.post({url: 'https://login.microsoftonline.com/common/oauth2/token', formData: formData}, (error, response, body) => {
         var JSONresponse = JSON.parse(body)
         accessToken = JSONresponse.access_token;
-        res.send("Close this dialog and click Approve again")
+        // res.sendFile(__dirname + '/post-authenticate.html');
+        res.redirect('https://exchangelabs.live-int.com/connectors/user1@griffin6653468665.org/originator/postAuthenticate');
     })
 })
 
 app.post('/action', (req, res) => {
     if (!accessToken || accessToken === "") {
-        res.status(401).send(JSON.stringify(
-            {
-                authenticationUrl: "https://login.microsoftonline.com/common/oauth2/authorize?\
-                client_id=bf411a0c-d417-401d-a2a9-446b63ec8879\
-                &response_type=code\
-                &redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fredirect\
-                &response_mode=query\
-                &resource=https%3A%2F%2Fgraph.microsoft.com%2F\
-                &state=12345"
-            }
-        )).end()
+        res.status(401).set("ACTION-AUTHENTICATE", "https://login.microsoftonline.com/common/oauth2/authorize?"+
+                "client_id=bf411a0c-d417-401d-a2a9-446b63ec8879"+
+                "&response_type=code"+
+                "&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fredirect"+
+                "&response_mode=query"+
+                "&resource=https%3A%2F%2Fgraph.microsoft.com%2F"+
+                "&state=12345").end();
+
         console.log("unauthorized")
     }
     else {
@@ -89,7 +85,7 @@ app.post('/action', (req, res) => {
                                     {
                                         "type": "Action.Http",
                                         "method": "POST",
-                                        "url": "https://b56a3ab4.ngrok.io/action",
+                                        "url": "https://5f983e66.ngrok.io/action",
                                         "body": "{}",
                                         "title": "Get Details",
                                         "isPrimary": true
